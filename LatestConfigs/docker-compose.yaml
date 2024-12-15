@@ -1,0 +1,109 @@
+services:
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    environment:
+      ZOOKEEPER_CLIENT_PORT: "2181"
+      ZOO_CONF_DIR: /conf
+      ZOO_CFG: zookeeper.properties
+    ports:
+      - "2181:2181"
+    volumes:
+      - ./zookeeper.conf:/conf/zookeeper.properties
+    networks:
+      - kafka-net 
+
+  kafka:
+    image: confluentinc/cp-kafka:latest
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 0
+      KAFKA_ADVERTISED_LISTENERS: INSIDE://kafka:29092,OUTSIDE://localhost:9092
+      KAFKA_LISTENERS: INSIDE://0.0.0.0:29092,OUTSIDE://0.0.0.0:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INSIDE:PLAINTEXT,OUTSIDE:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: INSIDE
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LOG_DIRS: /var/lib/kafka/data
+      KAFKA_MESSAGE_MAX_BYTES: 104857600
+      KAFKA_REPLICA_FETCH_MAX_BYTES: 104857600
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./server.properties:/etc/kafka/server.properties
+    networks:
+      - kafka-net  # Ensure Kafka is part of this network
+
+  twitter-api:
+    build: ./twitter-api
+    environment:
+      TWITTER_CONSUMER_KEY: 'OiERspB1Kjc4LxcJeegdwnO38'
+      TWITTER_CONSUMER_SECRET: 'mdL4B58xOO8us5PpBdoLhsipYJXaUhxUGKpBhj8zDBXTYpjqYi'
+      TWITTER_ACCESS_TOKEN: '1073678620005154816-rm8rBgngjOUfCkvtke7USX4aVMi9dH'
+      TWITTER_ACCESS_TOKEN_SECRET: '0PndXPUBbHXS5eECfrkQRQhCh1HXVkSmXWzbsqGy78NG7'
+      KAFKA_BROKER: kafka:9092
+    depends_on:
+      - kafka
+    networks:
+      - kafka-net  # Ensure communication with Kafka
+
+  spark:
+    image: bitnami/spark:latest
+    environment:
+      SPARK_MODE: master
+      SPARK_MASTER_PORT: 7077
+      SPARK_MASTER_WEBUI_PORT: 8080
+      SPARK_MASTER: spark://spark:7077
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      MYSQL_HOST: mysql
+      MYSQL_PORT: 3306
+      MYSQL_DATABASE: twitter_data
+      MYSQL_USER: mysqluser
+      MYSQL_PASSWORD: mysqlpassword
+    depends_on:
+      - kafka
+      - mysql
+    networks:
+      - kafka-net
+    ports:
+      - "7077:7077"
+      - "8080:8080"
+    volumes:
+      - ./spark:/opt/spark-apps
+
+  data-processing:
+    build: ./data-processing
+    depends_on:
+      - kafka
+      - mysql
+
+  mysql:
+    build: ./mysqldata
+    environment:
+      MYSQL_ROOT_PASSWORD: mysqlroot_password
+      MYSQL_HOST: mysql
+      MYSQL_PORT: 3306
+      MYSQL_DATABASE: twitter_data
+      MYSQL_USER: mysqluser
+      MYSQL_PASSWORD: mysqlpassword
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./initdb:/docker-entrypoint-initdb.d/
+    networks:
+      - kafka-net
+
+  app:
+    build: ./app
+    environment:
+      - DATABASE_URL=mysql://mysqluser:mysqlpassword@mysql:3306/twitter_data
+    ports:
+      - "5000:5000"
+    depends_on:
+      - mysql
+    networks:
+      - kafka-net
+
+networks:
+  kafka-net:
+    driver: bridge
