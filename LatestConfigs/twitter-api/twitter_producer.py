@@ -3,10 +3,10 @@ from kafka import KafkaProducer
 import json
 
 # Twitter API credentials
-consumer_key = 'OiERspB1Kjc4LxcJeegdwnO38'
-consumer_secret = 'mdL4B58xOO8us5PpBdoLhsipYJXaUhxUGKpBhj8zDBXTYpjqYi'
-access_token = '1073678620005154816-rm8rBgngjOUfCkvtke7USX4aVMi9dH'
-access_token_secret = '0PndXPUBbHXS5eECfrkQRQhCh1HXVkSmXWzbsqGy78NG7'
+consumer_key = ''
+consumer_secret = ''
+access_token = ''
+access_token_secret = ''
 
 # Set up OAuth and integrate with API
 auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
