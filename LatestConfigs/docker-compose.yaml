@@ -37,10 +37,10 @@ services:
   twitter-api:
     build: ./twitter-api
     environment:
-      TWITTER_CONSUMER_KEY: 'OiERspB1Kjc4LxcJeegdwnO38'
-      TWITTER_CONSUMER_SECRET: 'mdL4B58xOO8us5PpBdoLhsipYJXaUhxUGKpBhj8zDBXTYpjqYi'
-      TWITTER_ACCESS_TOKEN: '1073678620005154816-rm8rBgngjOUfCkvtke7USX4aVMi9dH'
-      TWITTER_ACCESS_TOKEN_SECRET: '0PndXPUBbHXS5eECfrkQRQhCh1HXVkSmXWzbsqGy78NG7'
+      TWITTER_CONSUMER_KEY: ''
+      TWITTER_CONSUMER_SECRET: ''
+      TWITTER_ACCESS_TOKEN: ''
+      TWITTER_ACCESS_TOKEN_SECRET: ''
       KAFKA_BROKER: kafka:9092
     depends_on:
       - kafka
